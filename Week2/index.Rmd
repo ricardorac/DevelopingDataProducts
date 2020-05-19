@@ -1,0 +1,67 @@
+---
+title: "Coronavirus (COVID-19) Cases Tracker"
+author: "Ricardo Costa"
+date: "5/19/2020"
+output: html_document
+---
+
+```{r libraries, include=FALSE}
+library(coronavirus)
+library(dplyr)
+library(leaflet)
+```
+
+This document uses the coronavirus library to show a map of COVID-19 pandemic spread throughout countries.
+
+```{r dataprocessing, echo=FALSE}
+data(coronavirus)
+cases_corona <- group_by(coronavirus, country, type)
+cases_corona_final <- summarize(cases_corona, total = sum(cases))
+country_local <- distinct(coronavirus[coronavirus$province == "",c("country", "lat", "long")])
+
+total_death <- cases_corona_final[cases_corona_final$type=="death",c("country","total")]
+total_confirmed <- cases_corona_final[cases_corona_final$type=="confirmed",c("country","total")]
+total_recovered <- cases_corona_final[cases_corona_final$type=="recovered",c("country","total")]
+
+country_local <- country_local[country_local$country %in% total_confirmed$country, ]
+country_local <- country_local[-188, ]
+
+total_death <- merge(total_death, country_local, by="country")
+total_confirmed <- merge(total_confirmed, country_local, by="country")
+total_recovered <- merge(total_recovered, country_local, by="country")
+```
+
+### Total confirmed cases (countries with more than 1000 confirmed cases)
+
+```{r leafletmapconfirmed, echo=FALSE}
+show_confirmed <- total_confirmed[total_confirmed$total > 1000,]
+show_confirmed <- mutate(show_confirmed, label = paste(country," - cases: ", total))
+show_confirmed %>% 
+  leaflet() %>%
+  addTiles() %>%
+  addCircles(weight = 1, radius = sqrt(show_confirmed$total)*500, label=show_confirmed$label, color="blue")
+```
+
+### Total confirmed deaths (countries with more than 50 deaths)
+
+```{r leafletmapdeaths, echo=FALSE}
+show_death <- total_death[total_death$total > 50,]
+show_death <- mutate(show_death, label = paste(country," - deaths: ", total))
+show_death %>% 
+  leaflet() %>%
+  addTiles() %>%
+  addCircles(weight = 1, radius = show_death$total * 10, label=show_death$label, color = "red")
+```
+
+### Total confirmed recoveries (countries with more than 1000 recovered)
+
+```{r leafletmaprecovered, echo=FALSE}
+show_recovered <- total_recovered[total_recovered$total > 1000,]
+show_recovered <- mutate(show_recovered, label = paste(country," - recovered: ", total))
+show_recovered %>% 
+  leaflet() %>%
+  addTiles() %>%
+  addCircles(weight = 1, radius = sqrt(show_recovered$total)*800, label=show_recovered$label, color="green")
+```
+
+Last updated in **`r max(coronavirus$date)`** (YYYY-MM-DD)
