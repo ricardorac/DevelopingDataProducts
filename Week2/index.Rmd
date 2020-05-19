@@ -30,6 +30,7 @@ total_death <- merge(total_death, country_local, by="country")
 total_confirmed <- merge(total_confirmed, country_local, by="country")
 total_recovered <- merge(total_recovered, country_local, by="country")
 ```
+## Date: 5/19/2020
 
 ### Total confirmed cases (countries with more than 1000 confirmed cases)
 
