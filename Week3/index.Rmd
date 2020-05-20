@@ -1,0 +1,63 @@
+---
+title: "COVID-19 Tracker (Week 3)"
+author: "Ricardo Costa"
+date: "May 20, 2020"
+output: ioslides_presentation
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+```
+
+```{r libraries, include=FALSE}
+library(plotly)
+library(dplyr)
+library(coronavirus)
+data(coronavirus)
+```
+
+## COVID-19 Data
+
+The dataset comes from `library(coronavirus)` available on CRAN. I will work with only 4 variables (country, cases, type and date)
+
+```{r}
+coronavirus$country <- as.factor(coronavirus$country)
+coronavirus$type <- as.factor(coronavirus$type)
+```
+
+```{r coronavirus, echo=TRUE, comment=""}
+subcorona <- coronavirus[,c("date", "country", "type", "cases")]
+str(subcorona)
+```
+
+
+## Brazil Daily news cases
+
+```{r}
+brazilcorona <- subcorona[subcorona$country=="Brazil",]
+brazilcorona <- brazilcorona[order(brazilcorona$date),]
+plot_ly(brazilcorona, x = ~date, y = ~cases, color = ~type, type = "scatter", mode = "lines")
+```
+
+## Brazil Cumulative cases
+
+```{r}
+brazilcorona$cumcases <- brazilcorona$cases
+brazilconfirmed <- brazilcorona[brazilcorona$type=="confirmed",]
+brazildeath <- brazilcorona[brazilcorona$type=="death",]
+brazilrecovered <- brazilcorona[brazilcorona$type=="recovered",]
+
+n <- dim(brazilconfirmed)[[1]]
+    
+for (i in 2:n) {
+    brazilconfirmed$cumcases[[i]] <- brazilconfirmed$cumcases[[i-1]] + brazilconfirmed$cases[[i]]
+    brazildeath$cumcases[[i]] <- brazildeath$cumcases[[i-1]] + brazildeath$cases[[i]]
+    brazilrecovered$cumcases[[i]] <- brazilrecovered$cumcases[[i-1]] + brazilrecovered$cases[[i]]
+}
+brazilcoronacumulative <- rbind(brazilconfirmed, brazildeath, brazilrecovered)
+plot_ly(brazilcoronacumulative, x = ~date, y = ~cumcases, color = ~type, type = "scatter", mode = "lines")
+```
+
+## Thank You
+
+Dataset latest updated in **`r max(coronavirus$date)`** (YYYY-MM-DD)
